@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - WorthUnzip</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="dashboard.html"><img src="logo.png" alt="WorthUnzip Logo" class="logo"></a>
+        </header>
+
+        <main>
+            <h1>Welcome to Your Dashboard</h1>
+
+                
+
+            <div class="button-group">
+                <a href="physical-asset.html" class="btn">Physical Assets</a>
+                <a href="digital-asset.html" class="btn">Digital Assets</a>
+            </div>
+        </main>
+
+        <footer>
+            <button onclick="logout()" class="back-button">Log Out</button>
+        </footer>
+        
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Load real estate data
+            const realEstateData = JSON.parse(localStorage.getItem("realEstateData")) || [];
+            document.getElementById("realEstateValue").innerText =
+                realEstateData.length > 0
+                    ? `${realEstateData.length} Properties Added`
+                    : "No data";
+
+            // Load gold data
+            const goldData = JSON.parse(localStorage.getItem("goldData")) || [];
+            if (goldData.length > 0) {
+                const totalGoldValue = goldData.reduce((sum, gold) => sum + parseFloat(gold.total || 0), 0);
+                document.getElementById("goldValue").innerText = `₹${totalGoldValue.toFixed(2)}`;
+            } else {
+                document.getElementById("goldValue").innerText = "No data";
+            }
+
+            // Load bonds data
+            const bondsData = JSON.parse(localStorage.getItem("bondsData")) || [];
+            document.getElementById("bondsValue").innerText =
+                bondsData.length > 0
+                    ? `${bondsData.length} Bonds Added`
+                    : "No data";
+        });
+
+        function downloadAllInvestmentDetails() {
+            const realEstateData = JSON.parse(localStorage.getItem("realEstateData")) || [];
+            const goldData = JSON.parse(localStorage.getItem("goldData")) || [];
+            const bondsData = JSON.parse(localStorage.getItem("bondsData")) || [];
+
+            if (realEstateData.length === 0 && goldData.length === 0 && bondsData.length === 0) {
+                alert("No data available to download.");
+                return;
+            }
+
+            let content = `Consolidated Investment Details:\n\n`;
+
+            // Append Real Estate Data
+            if (realEstateData.length > 0) {
+                content += `Real Estate Investments:\n`;
+                realEstateData.forEach((item, index) => {
+                    content += `
+Property ${index + 1}:
+Purchase Price: ₹${item.purchasePrice}
+Purchase Date: ${item.purchaseDate}
+Document: ${item.documentName}
+Relationship Manager:
+  Name: ${item.relationshipManager.name}
+  Contact: ${item.relationshipManager.contact}
+  Address: ${item.relationshipManager.address}\n\n`;
+                });
+            } else {
+                content += `No Real Estate Investments\n\n`;
+            }
+
+            // Append Gold Data
+            if (goldData.length > 0) {
+                content += `Gold Investments:\n`;
+                goldData.forEach((item, index) => {
+                    content += `
+Gold Investment ${index + 1}:
+Grams: ${item.grams}g
+Price per Gram: ₹${item.pricePerGram}
+Total Value: ₹${item.total}\n\n`;
+                });
+            } else {
+                content += `No Gold Investments\n\n`;
+            }
+
+            // Append Bond Data
+            if (bondsData.length > 0) {
+                content += `Bond Investments:\n`;
+                bondsData.forEach((bond, index) => {
+                    content += `
+Bond ${index + 1}:
+Name: ${bond.bondName}
+Issuer: ${bond.issuerName}
+Amount: ₹${parseFloat(bond.bondAmount).toFixed(2)}
+Interest Rate: ${bond.interestRate}%
+Years Invested: ${bond.yearsInvested}
+Final Value: ₹${bond.finalValue}\n\n`;
+                });
+            } else {
+                content += `No Bond Investments\n\n`;
+            }
+
+            // Create and download file
+            const blob = new Blob([content], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "ConsolidatedInvestmentDetails.txt";
+            link.click();
+        }
+
+        function logout() {
+        window.location.href = "index.html"; // Replace with the correct URL to log out
+    }
+    </script>
+</body>
+</html>
