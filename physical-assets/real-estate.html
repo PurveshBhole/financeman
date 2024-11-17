@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate - WorthUnzip</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .investment-list {
+            margin-top: 20px;
+        }
+
+        .investment-item {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .investment-item h3 {
+            font-size: 1.2em;
+            color: #00509E;
+            margin-bottom: 8px;
+        }
+
+        .investment-item p {
+            font-size: 1em;
+            margin: 5px 0;
+        }
+
+        .investment-item img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .download-section h3 {
+            margin-bottom: 10px;
+            color: #00509E;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../dashboard.html"><img src="../logo.png" alt="WorthUnzip Logo" class="logo"></a>
+        </header>
+
+        <main>
+            <h1>Real Estate Investment</h1>
+            <form id="realEstateForm" onsubmit="addRealEstate(event)">
+                <input type="number" placeholder="Enter Purchase Price (₹)" class="input-field" id="realEstatePrice" required>
+                <input type="date" class="input-field" id="purchaseDate" required>
+                <input type="file" accept="image/*" class="input-field file-upload" id="documentUpload" required>
+
+                <h3>Relationship Manager Details</h3>
+                <input type="text" placeholder="Enter Relationship Manager Name" class="input-field" id="rmName" required>
+                <input type="text" placeholder="Enter Contact Number" class="input-field" id="rmContact" required>
+                <textarea placeholder="Enter Address" class="input-field" id="rmAddress" required></textarea>
+
+                <button type="submit" class="btn">Add Real Estate Investment</button>
+            </form>
+
+            <div id="investmentList" class="investment-list">
+                <h3>Added Investments</h3>
+                <p id="noDataMessage">No investments added yet.</p>
+            </div>
+
+            <div class="download-section">
+                <h3>Download Real Estate Statement</h3>
+                <button class="btn" onclick="downloadStatement()">Download Statement</button>
+            </div>
+        </main>
+
+        <footer>
+            <button onclick="goBack()" class="back-button">← Go Back</button>
+        </footer>
+    </div>
+
+    <script>
+        function addRealEstate(event) {
+            event.preventDefault();
+
+            const purchasePrice = document.getElementById("realEstatePrice").value;
+            const purchaseDate = document.getElementById("purchaseDate").value;
+            const documentUpload = document.getElementById("documentUpload").files[0];
+            const rmName = document.getElementById("rmName").value;
+            const rmContact = document.getElementById("rmContact").value;
+            const rmAddress = document.getElementById("rmAddress").value;
+
+            if (!documentUpload || !documentUpload.type.startsWith("image/")) {
+                alert("Please upload a valid image file.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const realEstateData = JSON.parse(localStorage.getItem("realEstateData")) || [];
+                const newInvestment = {
+                    purchasePrice,
+                    purchaseDate,
+                    documentName: documentUpload.name,
+                    documentImage: e.target.result,
+                    relationshipManager: { name: rmName, contact: rmContact, address: rmAddress },
+                };
+
+                realEstateData.push(newInvestment);
+                localStorage.setItem("realEstateData", JSON.stringify(realEstateData));
+
+                document.getElementById("realEstateForm").reset();
+                alert(`Real Estate Investment of ₹${purchasePrice} added successfully!`);
+                displayInvestments();
+            };
+            reader.readAsDataURL(documentUpload);
+        }
+
+        function displayInvestments() {
+            const realEstateData = JSON.parse(localStorage.getItem("realEstateData")) || [];
+            const investmentList = document.getElementById("investmentList");
+            const noDataMessage = document.getElementById("noDataMessage");
+
+            investmentList.innerHTML = '<h3>Added Investments</h3>';
+
+            if (realEstateData.length === 0) {
+                noDataMessage.style.display = 'block';
+                return;
+            }
+
+            noDataMessage.style.display = 'none';
+
+            realEstateData.forEach((investment, index) => {
+                const investmentItem = document.createElement("div");
+                investmentItem.className = "investment-item";
+
+                investmentItem.innerHTML = `
+                    <p><strong>Purchase Price:</strong> ₹${investment.purchasePrice}</p>
+                    <p><strong>Purchase Date:</strong> ${investment.purchaseDate}</p>
+                    <p><strong>Document:</strong> ${investment.documentName}</p>
+                    <img src="${investment.documentImage}" alt="Uploaded Document">
+                    <h3>Relationship Manager Details</h3>
+                    <p><strong>Name:</strong> ${investment.relationshipManager.name}</p>
+                    <p><strong>Contact:</strong> ${investment.relationshipManager.contact}</p>
+                    <p><strong>Address:</strong> ${investment.relationshipManager.address}</p>
+                    <button class="btn" onclick="deleteInvestment(${index})">Delete</button>
+                `;
+                investmentList.appendChild(investmentItem);
+            });
+        }
+
+        function deleteInvestment(index) {
+            const realEstateData = JSON.parse(localStorage.getItem("realEstateData")) || [];
+            realEstateData.splice(index, 1);
+            localStorage.setItem("realEstateData", JSON.stringify(realEstateData));
+            displayInvestments();
+            alert("Investment deleted successfully!");
+        }
+
+        function downloadStatement() {
+            const realEstateData = JSON.parse(localStorage.getItem("realEstateData")) || [];
+            if (realEstateData.length === 0) {
+                alert("No investments to download.");
+                return;
+            }
+
+            let content = `Real Estate Investments Statement:\n\n`;
+            realEstateData.forEach((investment, index) => {
+                content += `Investment ${index + 1}:
+Purchase Price: ₹${investment.purchasePrice}
+Purchase Date: ${investment.purchaseDate}
+Document: ${investment.documentName}
+Relationship Manager:
+  Name: ${investment.relationshipManager.name}
+  Contact: ${investment.relationshipManager.contact}
+  Address: ${investment.relationshipManager.address}
+-------------------------\n`;
+            });
+
+            const blob = new Blob([content], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "RealEstateStatement.txt";
+            link.click();
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        document.addEventListener("DOMContentLoaded", displayInvestments);
+    </script>
+</body>
+</html>

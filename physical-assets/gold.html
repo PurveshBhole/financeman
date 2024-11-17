@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold Investment - WorthUnzip</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .gold-list {
+            margin-top: 20px;
+        }
+
+        .gold-item {
+            background-color: #ffffff; /* Clean white background */
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            color: #333; /* Consistent text color */
+        }
+
+        .gold-item p {
+            font-size: 1em;
+            margin: 5px 0;
+        }
+
+        .gold-item strong {
+            color: #00509E; /* Highlight key text */
+        }
+
+        .download-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .download-section h3 {
+            margin-bottom: 10px;
+            color: #00509E; /* Match dashboard blue color */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../dashboard.html"><img src="../logo.png" alt="WorthUnzip Logo" class="logo"></a>
+        </header>
+
+        <main>
+            <h1>Gold Investment</h1>
+
+            <!-- Form to Add Gold Investment -->
+            <form id="goldForm" onsubmit="saveGoldInvestment(event)">
+                <input type="number" id="goldGrams" placeholder="Enter Grams" class="input-field" required>
+                <input type="number" id="goldPrice" placeholder="Price per Gram (₹)" class="input-field" required>
+                <button type="submit" class="btn">Save Gold Investment</button>
+            </form>
+
+            <!-- Display Section for Saved Investments -->
+            <div id="goldList" class="gold-list">
+                <h3>Saved Gold Investments:</h3>
+                <p id="noDataMessage">No gold investments added yet.</p>
+                <!-- Gold investments will be dynamically displayed here -->
+            </div>
+
+            <!-- Download Section -->
+            <div class="download-section">
+                <h3>Download Gold Details</h3>
+                <button class="btn" onclick="downloadGoldDetails()">Download Gold Details</button>
+            </div>
+        </main>
+
+        <footer>
+            <button onclick="goBack()" class="back-button">← Go Back</button>
+        </footer>
+    </div>
+
+    <script>
+        // Save Gold Investment
+        function saveGoldInvestment(event) {
+            event.preventDefault();
+
+            // Retrieve input values
+            const grams = parseFloat(document.getElementById('goldGrams').value);
+            const pricePerGram = parseFloat(document.getElementById('goldPrice').value);
+
+            // Validation
+            if (isNaN(grams) || isNaN(pricePerGram) || grams <= 0 || pricePerGram <= 0) {
+                alert("Please enter valid values for grams and price per gram.");
+                return;
+            }
+
+            const totalValue = (grams * pricePerGram).toFixed(2);
+
+            // Create new investment object
+            const newInvestment = {
+                grams: grams,
+                pricePerGram: pricePerGram,
+                total: totalValue
+            };
+
+            // Retrieve existing data or initialize empty array
+            const goldData = JSON.parse(localStorage.getItem('goldData')) || [];
+            goldData.push(newInvestment);
+
+            // Save updated data to localStorage
+            localStorage.setItem('goldData', JSON.stringify(goldData));
+
+            // Reset form and update display
+            document.getElementById('goldForm').reset();
+            displayGoldInvestments();
+
+            alert(`Gold Investment of ₹${totalValue} saved successfully!`);
+        }
+
+        // Display Saved Gold Investments
+        function displayGoldInvestments() {
+            const goldData = JSON.parse(localStorage.getItem('goldData')) || [];
+            const goldListDiv = document.getElementById('goldList');
+            const noDataMessage = document.getElementById('noDataMessage');
+
+            // Clear existing content
+            goldListDiv.innerHTML = '<h3>Saved Gold Investments:</h3>';
+
+            if (goldData.length === 0) {
+                noDataMessage.style.display = 'block';
+                return;
+            }
+
+            noDataMessage.style.display = 'none';
+
+            // Dynamically add each investment to the list
+            goldData.forEach((investment, index) => {
+                const goldItem = document.createElement('div');
+                goldItem.className = 'gold-item';
+
+                goldItem.innerHTML = `
+                    <p><strong>Investment ${index + 1}:</strong></p>
+                    <p><strong>Grams:</strong> ${investment.grams}g</p>
+                    <p><strong>Price per Gram:</strong> ₹${investment.pricePerGram}</p>
+                    <p><strong>Total Value:</strong> ₹${investment.total}</p>
+                    <button class="btn" onclick="deleteGoldInvestment(${index})">Delete</button>
+                `;
+
+                goldListDiv.appendChild(goldItem);
+            });
+        }
+
+        // Delete a Gold Investment
+        function deleteGoldInvestment(index) {
+            const goldData = JSON.parse(localStorage.getItem('goldData')) || [];
+            goldData.splice(index, 1);
+
+            localStorage.setItem('goldData', JSON.stringify(goldData));
+            displayGoldInvestments();
+        }
+
+        // Download Gold Investment Details
+        function downloadGoldDetails() {
+            const goldData = JSON.parse(localStorage.getItem('goldData')) || [];
+            if (goldData.length === 0) {
+                alert("No gold data to download.");
+                return;
+            }
+
+            let content = `Gold Investment Details:\n\n`;
+            goldData.forEach((investment, index) => {
+                content += `
+Investment ${index + 1}:
+Grams: ${investment.grams}g
+Price per Gram: ₹${investment.pricePerGram}
+Total Value: ₹${investment.total}\n\n`;
+            });
+
+            const blob = new Blob([content], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "GoldDetails.txt";
+            link.click();
+        }
+
+        // Go Back to Previous Page
+        function goBack() {
+            window.history.back();
+        }
+
+        // Load Gold Investments on Page Load
+        document.addEventListener("DOMContentLoaded", displayGoldInvestments);
+    </script>
+</body>
+</html>
