@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonds Investment - WorthUnzip</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .bond-list {
+            margin-top: 20px;
+        }
+
+        .bond-item {
+            background-color: #ffffff; /* Clean white background */
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            color: #333; /* Consistent text color */
+        }
+
+        .bond-item h3 {
+            font-size: 1.2em;
+            color: #00509E; /* Consistent with dashboard blue */
+            margin-bottom: 8px;
+        }
+
+        .bond-item p {
+            font-size: 1em;
+            margin: 5px 0;
+        }
+
+        .download-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .download-section h3 {
+            margin-bottom: 10px;
+            color: #00509E; /* Match dashboard blue */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../dashboard.html"><img src="../logo.png" alt="WorthUnzip Logo" class="logo"></a>
+        </header>
+
+        <main>
+            <h1>Bonds Investment</h1>
+
+            <!-- Form to Add Bonds Investment -->
+            <form id="bondForm" onsubmit="saveBondInvestment(event)">
+                <input type="text" id="bondName" placeholder="Enter Bond Name" class="input-field" required>
+                <input type="text" id="issuerName" placeholder="Enter Issuer Name" class="input-field" required>
+                <input type="number" id="bondAmount" placeholder="Enter Bond Amount (₹)" class="input-field" required>
+                <input type="number" id="interestRate" placeholder="Enter Interest Rate (%)" class="input-field" required>
+                <input type="number" id="yearsInvested" placeholder="Enter Years of Investment" class="input-field" required>
+                <button type="submit" class="btn">Save Bond Investment</button>
+            </form>
+
+            <!-- Display Section for Saved Investments -->
+            <div id="bondList" class="bond-list">
+                <h3>Saved Bond Investments:</h3>
+                <p id="noDataMessage">No bond investments added yet.</p>
+                <!-- Bonds investments will be dynamically displayed here -->
+            </div>
+
+            <!-- Download Section -->
+            <div class="download-section">
+                <h3>Download Bond Details</h3>
+                <button class="btn" onclick="downloadBondDetails()">Download Bond Details</button>
+            </div>
+        </main>
+
+        <footer>
+            <button onclick="goBack()" class="back-button">← Go Back</button>
+        </footer>
+    </div>
+
+    <script>
+        // Save Bond Investment
+        function saveBondInvestment(event) {
+            event.preventDefault();
+
+            const bondName = document.getElementById('bondName').value;
+            const issuerName = document.getElementById('issuerName').value;
+            const bondAmount = parseFloat(document.getElementById('bondAmount').value);
+            const interestRate = parseFloat(document.getElementById('interestRate').value);
+            const yearsInvested = parseInt(document.getElementById('yearsInvested').value);
+
+            if (isNaN(bondAmount) || isNaN(interestRate) || isNaN(yearsInvested)) {
+                alert("Please enter valid numeric values for bond details.");
+                return;
+            }
+
+            const finalValue = (bondAmount * Math.pow(1 + interestRate / 100, yearsInvested)).toFixed(2);
+
+            const newBond = {
+                bondName,
+                issuerName,
+                bondAmount,
+                interestRate,
+                yearsInvested,
+                finalValue
+            };
+
+            const bondData = JSON.parse(localStorage.getItem('bondsData')) || [];
+            bondData.push(newBond);
+
+            localStorage.setItem('bondsData', JSON.stringify(bondData));
+            document.getElementById('bondForm').reset();
+            displayBondInvestments();
+
+            alert(`Bond Investment of ₹${bondAmount} saved successfully!`);
+        }
+
+        // Display Saved Bond Investments
+        function displayBondInvestments() {
+            const bondData = JSON.parse(localStorage.getItem('bondsData')) || [];
+            const bondListDiv = document.getElementById('bondList');
+            const noDataMessage = document.getElementById('noDataMessage');
+
+            bondListDiv.innerHTML = '<h3>Saved Bond Investments:</h3>';
+
+            if (bondData.length === 0) {
+                noDataMessage.style.display = 'block';
+                return;
+            }
+
+            noDataMessage.style.display = 'none';
+
+            bondData.forEach((bond, index) => {
+                const bondItem = document.createElement('div');
+                bondItem.className = 'bond-item';
+
+                bondItem.innerHTML = `
+                    <h3>Bond ${index + 1}</h3>
+                    <p><strong>Name:</strong> ${bond.bondName}</p>
+                    <p><strong>Issuer:</strong> ${bond.issuerName}</p>
+                    <p><strong>Amount:</strong> ₹${bond.bondAmount.toFixed(2)}</p>
+                    <p><strong>Interest Rate:</strong> ${bond.interestRate}%</p>
+                    <p><strong>Years:</strong> ${bond.yearsInvested}</p>
+                    <p><strong>Final Value:</strong> ₹${bond.finalValue}</p>
+                    <button class="btn" onclick="deleteBondInvestment(${index})">Delete</button>
+                `;
+
+                bondListDiv.appendChild(bondItem);
+            });
+        }
+
+        // Delete a Bond Investment
+        function deleteBondInvestment(index) {
+            const bondData = JSON.parse(localStorage.getItem('bondsData')) || [];
+            bondData.splice(index, 1);
+            localStorage.setItem('bondsData', JSON.stringify(bondData));
+            displayBondInvestments();
+        }
+
+        // Download Bond Investment Details
+        function downloadBondDetails() {
+            const bondData = JSON.parse(localStorage.getItem('bondsData')) || [];
+            if (bondData.length === 0) {
+                alert("No bond data to download.");
+                return;
+            }
+
+            let content = `Bond Investment Details:\n\n`;
+            bondData.forEach((bond, index) => {
+                content += `
+Bond ${index + 1}:
+Name: ${bond.bondName}
+Issuer: ${bond.issuerName}
+Amount: ₹${bond.bondAmount.toFixed(2)}
+Interest Rate: ${bond.interestRate}%
+Years: ${bond.yearsInvested}
+Final Value: ₹${bond.finalValue}\n\n`;
+            });
+
+            const blob = new Blob([content], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "BondDetails.txt";
+            link.click();
+        }
+
+        // Go Back to Previous Page
+        function goBack() {
+            window.history.back();
+        }
+
+        // Load Bond Investments on Page Load
+        document.addEventListener("DOMContentLoaded", displayBondInvestments);
+    </script>
+</body>
+</html>
