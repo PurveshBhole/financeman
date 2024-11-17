@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investments - WorthUnzip</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../dashboard.html"><img src="../logo.png" alt="WorthUnzip Logo" class="logo"></a>
+        </header>
+
+        <main>
+            <h1>Manage Your Investments</h1>
+            <p>Select the investment type you want to manage:</p>
+
+            <!-- Dropdown to select investment type -->
+            <div class="dropdown">
+                <select id="investmentDropdown" class="input-field" onchange="showInvestmentDetails()">
+                    <option value="" disabled selected>Select Investment Type</option>
+                    <option value="stocks">Stocks</option>
+                    <option value="mutual-funds">Mutual Funds</option>
+                    <option value="cryptocurrency">Cryptocurrency</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <!-- Section to dynamically load investment details -->
+            <div id="investmentDetails" class="investment-list">
+                <p>No investment selected yet.</p>
+            </div>
+
+            <!-- Download Button -->
+            <div class="download-section">
+                <h3>Download Investment Details</h3>
+                <button class="btn" onclick="downloadInvestmentDetails()">Download Investment Details</button>
+            </div>
+        </main>
+
+        <footer>
+            <button onclick="goBack()" class="back-button">← Go Back</button>
+        </footer>
+    </div>
+
+    <script>
+        const investmentData = JSON.parse(localStorage.getItem('investmentData')) || {
+            stocks: [],
+            'mutual-funds': [],
+            cryptocurrency: [],
+            other: [],
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem('investmentData', JSON.stringify(investmentData));
+        }
+
+        function showInvestmentDetails() {
+            const investmentType = document.getElementById("investmentDropdown").value;
+            const investmentDetails = document.getElementById('investmentDetails');
+            investmentDetails.innerHTML = ''; 
+
+            let existingInvestments = '';
+            if (investmentData[investmentType] && investmentData[investmentType].length > 0) {
+                investmentData[investmentType].forEach((inv, index) => {
+                    existingInvestments += `
+                        <div class="investment-item">
+                            <h3>${investmentType.charAt(0).toUpperCase() + investmentType.slice(1)} ${index + 1}</h3>
+                            ${Object.entries(inv)
+                                .map(([key, value]) => `<p><strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value}</p>`)
+                                .join('')}
+                            <button class="btn delete-btn" onclick="deleteInvestment('${investmentType}', ${index})">Delete</button>
+                        </div>
+                    `;
+                });
+            }
+
+            let investmentForm = '';
+            if (investmentType === 'stocks') {
+                investmentForm = `
+                    <h2>Add New Stocks Investment</h2>
+                    <form onsubmit="saveInvestment(event, 'stocks')">
+                        <input type="text" placeholder="Stock Name" class="input-field" id="stockName" required>
+                        <input type="number" placeholder="Number of Shares" class="input-field" id="stockShares" required>
+                        <input type="number" placeholder="Purchase Price per Share (₹)" class="input-field" id="stockPrice" required>
+                        <button type="submit" class="btn">Add Stocks Investment</button>
+                    </form>
+                `;
+            } else if (investmentType === 'mutual-funds') {
+                investmentForm = `
+                    <h2>Add New Mutual Funds Investment</h2>
+                    <form onsubmit="saveInvestment(event, 'mutual-funds')">
+                        <input type="text" placeholder="Fund Name" class="input-field" id="fundName" required>
+                        <input type="number" placeholder="Amount Invested (₹)" class="input-field" id="fundAmount" required>
+                        <button type="submit" class="btn">Add Mutual Fund Investment</button>
+                    </form>
+                `;
+            } else if (investmentType === 'cryptocurrency') {
+                investmentForm = `
+                    <h2>Add New Cryptocurrency Investment</h2>
+                    <form onsubmit="saveInvestment(event, 'cryptocurrency')">
+                        <input type="text" placeholder="Cryptocurrency Name" class="input-field" id="cryptoName" required>
+                        <input type="number" placeholder="Amount Invested (₹)" class="input-field" id="cryptoAmount" required>
+                        <button type="submit" class="btn">Add Cryptocurrency Investment</button>
+                    </form>
+                `;
+            } else if (investmentType === 'other') {
+                investmentForm = `
+                    <h2>Add New Other Investment</h2>
+                    <form onsubmit="saveInvestment(event, 'other')">
+                        <input type="text" placeholder="Investment Name" class="input-field" id="otherName" required>
+                        <input type="number" placeholder="Amount Invested (₹)" class="input-field" id="otherAmount" required>
+                        <button type="submit" class="btn">Add Other Investment</button>
+                    </form>
+                `;
+            }
+
+            investmentDetails.innerHTML = existingInvestments + investmentForm;
+        }
+
+        function saveInvestment(event, type) {
+            event.preventDefault();
+
+            const inputs = document.querySelectorAll('#investmentDetails .input-field');
+            const investment = {};
+
+            inputs.forEach(input => {
+                investment[input.id] = input.value;
+            });
+
+            investmentData[type].push(investment);
+            saveToLocalStorage();
+
+            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} Investment added successfully!`);
+            showInvestmentDetails();
+        }
+
+        function deleteInvestment(type, index) {
+            investmentData[type].splice(index, 1); 
+            saveToLocalStorage(); 
+            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} Investment deleted successfully.`);
+            showInvestmentDetails(); 
+        }
+
+        function downloadInvestmentDetails() {
+            let fileContent = `Investment Details:\n\n`;
+
+            Object.entries(investmentData).forEach(([type, investments]) => {
+                if (investments.length > 0) {
+                    fileContent += `${type.charAt(0).toUpperCase() + type.slice(1)} Investments:\n`;
+                    investments.forEach((investment, index) => {
+                        fileContent += `Investment ${index + 1}:\n`;
+                        Object.entries(investment).forEach(([key, value]) => {
+                            fileContent += `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}\n`;
+                        });
+                        fileContent += '\n';
+                    });
+                }
+            });
+
+            const blob = new Blob([fileContent], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "InvestmentDetails.txt";
+            link.click();
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>
