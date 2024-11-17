@@ -1,1 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Assets - WorthUnzip</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../dashboard.html"><img src="../logo.png" alt="WorthUnzip Logo" class="logo"></a>
+        </header>
+
+        <main>
+            <h1>Bank Information</h1>
+            
+            <!-- Add Bank Form Section -->
+            <button onclick="showBankForm()" class="btn">Add Bank</button>
+            
+            <div id="bankFormContainer" style="display: none;">
+                <form onsubmit="saveBankDetails(event)">
+                    <select id="bankSelect" class="input-field" required>
+                        <option value="" disabled selected>Select Bank</option>
+                        <option value="SBI">State Bank of India (SBI)</option>
+                        <option value="HDFC">HDFC Bank</option>
+                        <option value="ICICI">ICICI Bank</option>
+                        <option value="Axis">Axis Bank</option>
+                        <option value="Kotak">Kotak Mahindra Bank</option>
+                        <option value="PNB">Punjab National Bank (PNB)</option>
+                        <option value="BOB">Bank of Baroda (BOB)</option>
+                    </select>
+
+                    <input type="text" id="accountNumber" placeholder="Enter Account Number" class="input-field" required>
+                    <input type="text" id="ifscCode" placeholder="Enter IFSC Code" class="input-field" required>
+                    <input type="number" id="balance" placeholder="Enter Bank Balance (₹)" class="input-field" required>
+                    
+                    <button type="submit" class="btn">Save Bank Details</button>
+                </form>
+            </div>
+
+            <!-- Display Bank Details Section -->
+            <div id="bankDetailsDisplay" style="display: none;">
+                <h2>Saved Bank Details</h2>
+                <div id="bankInfoContainer" class="bank-list"></div>
+            </div>
+
+            <!-- Download Statement Section -->
+            <div class="download-section">
+                <h3>Download Bank Statement</h3>
+                <button class="btn" onclick="downloadBankStatement()">Download Statement</button>
+            </div>
+        </main>
+
+        <footer>
+            <button onclick="goBack()" class="back-button">← Go Back</button>
+        </footer>
+    </div>
+
+    <script>
+        // Show form when "Add Bank" is clicked
+        function showBankForm() {
+            document.getElementById('bankFormContainer').style.display = 'block';
+        }
+
+        // Save bank details to localStorage
+        function saveBankDetails(event) {
+            event.preventDefault();
+            
+            const bank = document.getElementById('bankSelect').value;
+            const accountNumber = document.getElementById('accountNumber').value;
+            const ifscCode = document.getElementById('ifscCode').value;
+            const balance = document.getElementById('balance').value;
+
+            const bankDetails = {
+                bank: bank,
+                accountNumber: accountNumber,
+                ifscCode: ifscCode,
+                balance: balance
+            };
+
+            // Retrieve existing bank details from localStorage or initialize as empty array
+            let bankList = JSON.parse(localStorage.getItem('bankList')) || [];
+
+            // Add new bank details to the array
+            bankList.push(bankDetails);
+
+            // Store the updated array in localStorage
+            localStorage.setItem('bankList', JSON.stringify(bankList));
+            alert('Bank details saved successfully!');
+            displayBankDetails();  // Refresh the displayed bank details
+
+            // Hide form after submission
+            document.getElementById('bankFormContainer').style.display = 'none';
+        }
+
+        // Display all saved bank details from localStorage
+        function displayBankDetails() {
+            const bankList = JSON.parse(localStorage.getItem('bankList')) || [];
+
+            if (bankList.length > 0) {
+                document.getElementById('bankDetailsDisplay').style.display = 'block';
+                const bankInfoContainer = document.getElementById('bankInfoContainer');
+                bankInfoContainer.innerHTML = '';  // Clear previous entries
+
+                bankList.forEach((bankDetails, index) => {
+                    bankInfoContainer.innerHTML += `
+                        <div class="bank-item">
+                            <h3>Bank ${index + 1}</h3>
+                            <p><strong>Bank:</strong> ${bankDetails.bank}</p>
+                            <p><strong>Account Number:</strong> ${bankDetails.accountNumber}</p>
+                            <p><strong>IFSC Code:</strong> ${bankDetails.ifscCode}</p>
+                            <p><strong>Balance:</strong> ₹${parseFloat(bankDetails.balance).toFixed(2)}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                document.getElementById('bankDetailsDisplay').style.display = 'none';
+            }
+        }
+
+        // Download bank statement
+        function downloadBankStatement() {
+            const bankList = JSON.parse(localStorage.getItem('bankList')) || [];
+
+            if (bankList.length === 0) {
+                alert("No bank details to download.");
+                return;
+            }
+
+            let fileContent = `Bank Statement:\n\n`;
+
+            bankList.forEach((bankDetails, index) => {
+                fileContent += `Bank ${index + 1}:\nBank: ${bankDetails.bank}\nAccount Number: ${bankDetails.accountNumber}\nIFSC Code: ${bankDetails.ifscCode}\nBalance: ₹${parseFloat(bankDetails.balance).toFixed(2)}\n\n`;
+            });
+
+            const blob = new Blob([fileContent], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "BankStatement.txt";
+            link.click();
+        }
+
+        // Load bank details on page load
+        window.onload = function() {
+            displayBankDetails();
+        };
+
+        // Go back function
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+
+    <style>
+        .bank-list {
+            margin-top: 20px;
+        }
+
+        .bank-item {
+            background-color: #ffffff; /* Consistent white background */
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            color: #333; /* Consistent text color */
+        }
+
+        .bank-item h3 {
+            font-size: 1.2em;
+            color: #00509E; /* Match dashboard blue color */
+            margin-bottom: 8px;
+        }
+
+        .bank-item p {
+            font-size: 1em;
+            margin: 5px 0;
+        }
+
+        .download-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .download-section h3 {
+            margin-bottom: 10px;
+            color: #00509E; /* Match dashboard blue color */
+        }
+    </style>
+</body>
+</html>
 
